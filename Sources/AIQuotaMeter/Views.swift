@@ -231,8 +231,15 @@ struct SettingsView: View {
             HStack {
                 Text(updateDescription).font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                Button("Rechercher") { store.checkForUpdates(manual: true) }
-                    .disabled(store.updateStatus == .checking || store.updateStatus == .installing)
+                if store.updateStatus == .installing {
+                    ProgressView().controlSize(.small)
+                } else if store.update != nil {
+                    Button(Updater.canSelfUpdate ? "Mettre à jour" : "Télécharger") { store.installUpdate() }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    Button("Rechercher") { store.checkForUpdates(manual: true) }
+                        .disabled(store.updateStatus == .checking)
+                }
             }
             Divider()
             Button("Désinstaller AI Quota Meter…", role: .destructive) { store.uninstallApp() }
