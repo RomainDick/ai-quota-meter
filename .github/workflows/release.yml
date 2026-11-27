@@ -11,7 +11,7 @@ jobs:
   release:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         run: UNIVERSAL=1 VERSION="${GITHUB_REF_NAME#v}" ./scripts/package.sh
       - name: Archive
