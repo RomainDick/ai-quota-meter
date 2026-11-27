@@ -26,7 +26,7 @@ final class ClaudeProvider {
     private func readSnapshot(into usage: inout ProviderUsage) {
         guard let data = try? Data(contentsOf: AppPaths.snapshotURL),
               let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
-            usage.detail = "Quota lu uniquement via Claude Code : lance une session pour l'afficher. L'usage de Cowork et de claude.ai y est inclus, le quota étant commun."
+            usage.detail = "Quota transmis uniquement par Claude Code lancé dans un terminal (commande claude), pas par l'app de bureau. Il inclut l'usage Cowork et claude.ai, le quota étant commun."
             return
         }
         usage.fiveHour = quotaWindow(object["fiveHour"], percentKey: "used_percentage")

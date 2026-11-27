@@ -4,6 +4,7 @@ import SwiftUI
 struct UsagePopover: View {
     @ObservedObject var store: UsageStore
     @State private var showingSettings = false
+    @State private var window: NSWindow?
 
     var body: some View {
         Group {
@@ -16,7 +17,26 @@ struct UsagePopover: View {
         .padding(14)
         .frame(width: 330, alignment: .top)
         .fixedSize(horizontal: false, vertical: true)
+        .background(GeometryReader { proxy in
+            Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+        })
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(WindowAccessor { found in if window !== found { window = found } })
+        .onPreferenceChange(ContentHeightKey.self) { height in
+            DispatchQueue.main.async { fit(height: height) }
+        }
         .onAppear { store.refresh() }
+    }
+
+    private func fit(height: CGFloat) {
+        guard let window, height > 0 else { return }
+        let content = window.contentRect(forFrameRect: window.frame)
+        let delta = height - content.height
+        guard abs(delta) > 0.5 else { return }
+        var frame = window.frame
+        frame.origin.y -= delta
+        frame.size.height += delta
+        window.setFrame(frame, display: true, animate: false)
     }
 
     private var content: some View {
@@ -298,5 +318,24 @@ struct UpdateBanner: View {
                 Text(message).font(.caption).foregroundStyle(.red)
             }
         }
+    }
+}
+
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+private struct WindowAccessor: NSViewRepresentable {
+    let found: (NSWindow) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { if let window = view.window { found(window) } }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async { if let window = nsView.window { found(window) } }
     }
 }
