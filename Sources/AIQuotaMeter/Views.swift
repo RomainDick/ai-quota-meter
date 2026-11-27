@@ -14,7 +14,8 @@ struct UsagePopover: View {
             }
         }
         .padding(14)
-        .frame(width: 330)
+        .frame(width: 330, alignment: .top)
+        .fixedSize(horizontal: false, vertical: true)
         .onAppear { store.refresh() }
     }
 
@@ -105,10 +106,12 @@ struct ProviderSection: View {
             if let detail = provider.detail, provider.fiveHour == nil {
                 Text(detail).font(.caption).foregroundStyle(.secondary)
             }
-            HStack(spacing: 14) {
-                TokenStat(label: "5 h", value: provider.tokens.fiveHours)
-                TokenStat(label: "Aujourd'hui", value: provider.tokens.today)
-                TokenStat(label: "7 jours", value: provider.tokens.week)
+            if provider.tokens.week > 0 {
+                HStack(spacing: 14) {
+                    TokenStat(label: "5 h", value: provider.tokens.fiveHours)
+                    TokenStat(label: "Aujourd'hui", value: provider.tokens.today)
+                    TokenStat(label: "7 jours", value: provider.tokens.week)
+                }
             }
         }
         .opacity(active ? 1 : 0.7)
