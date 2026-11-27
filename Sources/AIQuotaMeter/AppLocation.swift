@@ -51,7 +51,25 @@ enum AppLocation {
         try? FileManager.default.trashItem(at: originalURL, resultingItemURL: nil)
     }
 
-    private static func removeQuarantine(_ url: URL) {
+    static let legacyNames = ["AIUsageBar.app"]
+
+    static func removeLegacyCopies() {
+        let current = bundleURL.standardizedFileURL
+        let folders = [AppPaths.userApplications, URL(fileURLWithPath: "/Applications")]
+        for running in NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+        where running.bundleURL?.standardizedFileURL != current {
+            running.terminate()
+        }
+        for folder in folders {
+            for name in legacyNames {
+                let url = folder.appendingPathComponent(name)
+                guard url.standardizedFileURL != current, FileManager.default.fileExists(atPath: url.path) else { continue }
+                try? FileManager.default.trashItem(at: url, resultingItemURL: nil)
+            }
+        }
+    }
+
+    static func removeQuarantine(_ url: URL) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/xattr")
         process.arguments = ["-dr", "com.apple.quarantine", url.path]

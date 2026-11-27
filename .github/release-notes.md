@@ -1,6 +1,6 @@
 ## Installation
 
-1. Télécharge **AIUsageBar.dmg**, ouvre-le et glisse **AIUsageBar** sur **Applications**.
+1. Télécharge **AIQuotaMeter.dmg**, ouvre-le et glisse **AIQuotaMeter** sur **Applications**.
 2. Ouvre l'app. La première fois, macOS la bloque car elle n'est pas notarisée par Apple :
    - **macOS 15 et plus** : Réglages Système › Confidentialité et sécurité, puis **Ouvrir quand même** en bas de la page ;
    - **macOS 13 et 14** : clic droit sur l'app › Ouvrir, puis **Ouvrir**.
@@ -9,5 +9,5 @@
 Installation en une commande, sans blocage macOS :
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/RomainDick/ai-usage-bar/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/RomainDick/ai-quota-meter/main/install.sh | sh
 ```

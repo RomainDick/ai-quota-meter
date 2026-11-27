@@ -17,6 +17,7 @@ enum Onboarding {
         if !AppLocation.isInApplications && !defaults.bool(forKey: relocationDeclinedKey) {
             if offerRelocation() { return }
         }
+        AppLocation.removeLegacyCopies()
         guard AppLocation.canHostHook, let executable = Bundle.main.executablePath else { return }
         switch HookManager.status() {
         case .outdated:
@@ -30,7 +31,7 @@ enum Onboarding {
 
     private static func offerRelocation() -> Bool {
         let accepted = ask(
-            title: "Déplacer AI Usage Bar dans Applications ?",
+            title: "Déplacer AI Quota Meter dans Applications ?",
             message: "L'app doit être rangée dans \(AppPaths.userApplications.path) pour fonctionner durablement : le hook Claude Code enregistre son emplacement. La copie actuelle sera mise à la corbeille.",
             confirm: "Déplacer",
             cancel: "Pas maintenant"
@@ -51,7 +52,7 @@ enum Onboarding {
     private static func offerHook(executable: String) {
         let accepted = ask(
             title: "Lire le quota de Claude Code ?",
-            message: "Claude Code n'expose son quota qu'à sa ligne de statut. AI Usage Bar va remplacer la statusLine de ~/.claude/settings.json par la sienne : une sauvegarde est faite et ta statusLine actuelle, s'il y en a une, reste affichée. Tu pourras la retirer dans les réglages.",
+            message: "Claude Code n'expose son quota qu'à sa ligne de statut. AI Quota Meter va remplacer la statusLine de ~/.claude/settings.json par la sienne : une sauvegarde est faite et ta statusLine actuelle, s'il y en a une, reste affichée. Tu pourras la retirer dans les réglages.",
             confirm: "Installer",
             cancel: "Plus tard"
         )

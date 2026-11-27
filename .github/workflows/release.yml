@@ -17,11 +17,11 @@ jobs:
       - name: Archive
         run: |
           ./scripts/make-dmg.sh
-          mv build/AIUsageBar.dmg AIUsageBar.dmg
-          ditto -c -k --keepParent build/AIUsageBar.app AIUsageBar.zip
-          shasum -a 256 AIUsageBar.zip > AIUsageBar.zip.sha256
-          shasum -a 256 AIUsageBar.dmg > AIUsageBar.dmg.sha256
+          mv build/AIQuotaMeter.dmg AIQuotaMeter.dmg
+          ditto -c -k --keepParent build/AIQuotaMeter.app AIQuotaMeter.zip
+          shasum -a 256 AIQuotaMeter.zip > AIQuotaMeter.zip.sha256
+          shasum -a 256 AIQuotaMeter.dmg > AIQuotaMeter.dmg.sha256
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" AIUsageBar.dmg AIUsageBar.dmg.sha256 AIUsageBar.zip AIUsageBar.zip.sha256 --title "$GITHUB_REF_NAME" --notes-file .github/release-notes.md --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" AIQuotaMeter.dmg AIQuotaMeter.dmg.sha256 AIQuotaMeter.zip AIQuotaMeter.zip.sha256 --title "$GITHUB_REF_NAME" --notes-file .github/release-notes.md --generate-notes

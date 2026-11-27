@@ -22,6 +22,10 @@ struct UsagePopover: View {
         let now = Date()
         let points = store.historyPoints(now: now)
         return VStack(alignment: .leading, spacing: 14) {
+            if let update = store.update {
+                UpdateBanner(store: store, update: update)
+                Divider()
+            }
             ForEach(store.providers) { provider in
                 ProviderSection(provider: provider, settings: store.settings, projection: store.projection(for: provider), now: now)
                 Divider()
@@ -219,7 +223,16 @@ struct SettingsView: View {
                     .disabled(store.hookStatus == .unavailable)
             }
             Divider()
-            Button("Désinstaller AI Usage Bar…", role: .destructive) { store.uninstallApp() }
+            Text("Mises à jour").font(.subheadline)
+            Toggle("Rechercher automatiquement chaque jour", isOn: $store.automaticUpdateCheck)
+            HStack {
+                Text(updateDescription).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button("Rechercher") { store.checkForUpdates(manual: true) }
+                    .disabled(store.updateStatus == .checking || store.updateStatus == .installing)
+            }
+            Divider()
+            Button("Désinstaller AI Quota Meter…", role: .destructive) { store.uninstallApp() }
             HStack {
                 Spacer()
                 Button("Terminé", action: done).keyboardShortcut(.defaultAction)
@@ -228,12 +241,52 @@ struct SettingsView: View {
         .toggleStyle(.checkbox)
     }
 
+    private var updateDescription: String {
+        switch store.updateStatus {
+        case .checking: return "Recherche en cours…"
+        case .upToDate: return "Version \(Updater.currentVersion), à jour"
+        case .failed(let message): return message
+        case .idle, .installing:
+            if let update = store.update { return "Version \(update.version) disponible" }
+            return "Version \(Updater.currentVersion)"
+        }
+    }
+
     private var hookDescription: String {
         switch store.hookStatus {
         case .installed: return "Hook statusLine actif"
         case .outdated: return "Hook pointant vers un ancien emplacement"
         case .absent: return "Hook absent : quota Claude non lu"
         case .unavailable: return "Range l'app dans Applications pour installer le hook"
+        }
+    }
+}
+
+struct UpdateBanner: View {
+    @ObservedObject var store: UsageStore
+    let update: ReleaseInfo
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.down.circle.fill").foregroundStyle(.blue).font(.title3)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Version \(update.version) disponible").font(.subheadline.weight(.semibold))
+                    Link("Installée : \(Updater.currentVersion) · voir les nouveautés", destination: update.pageURL)
+                        .font(.caption)
+                }
+                Spacer()
+                if store.updateStatus == .installing {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button(Updater.canSelfUpdate ? "Mettre à jour" : "Télécharger") { store.installUpdate() }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                }
+            }
+            if case .failed(let message) = store.updateStatus {
+                Text(message).font(.caption).foregroundStyle(.red)
+            }
         }
     }
 }

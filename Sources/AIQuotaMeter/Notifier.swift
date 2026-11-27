@@ -39,6 +39,13 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
+    func announceUpdate(version: String) {
+        let key = "notified.update.\(version)"
+        guard !defaults.bool(forKey: key) else { return }
+        defaults.set(true, forKey: key)
+        post(id: key, title: "AI Quota Meter \(version) disponible", body: "Ouvre l'app depuis la barre de menus pour mettre à jour.")
+    }
+
     private func post(id: String, title: String, body: String) {
         let content = UNMutableNotificationContent()
         content.title = title

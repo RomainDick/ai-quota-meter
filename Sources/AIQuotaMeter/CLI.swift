@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 enum CLI {
     static func runStatusLine() {
@@ -35,6 +35,36 @@ enum CLI {
         } catch {
             fail(error.localizedDescription)
         }
+    }
+
+    static func update() {
+        let done = DispatchSemaphore(value: 0)
+        var status: Int32 = 0
+        Task {
+            do {
+                let release = try await Updater.latestRelease()
+                if Updater.isNewer(release) {
+                    let target = AppLocation.bundleURL
+                    print("Mise à jour \(Updater.currentVersion) → \(release.version)")
+                    try await Updater.install(release, into: target)
+                    let running = NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+                        .filter { $0.bundleURL?.standardizedFileURL == target.standardizedFileURL }
+                    if !running.isEmpty {
+                        running.forEach { $0.terminate() }
+                        Updater.relaunch(target)
+                    }
+                    print("Version \(release.version) installée dans \(target.path)")
+                } else {
+                    print("Déjà à jour (\(Updater.currentVersion))")
+                }
+            } catch {
+                FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8))
+                status = 1
+            }
+            done.signal()
+        }
+        done.wait()
+        exit(status)
     }
 
     private static func percent(_ raw: Any?) -> Int? {

@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>AI Usage Bar</string>
+	<string>AI Quota Meter</string>
 	<key>CFBundleExecutable</key>
-	<string>AIUsageBar</string>
+	<string>AIQuotaMeter</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>io.github.romaindick.ai-usage-bar</string>
 	<key>CFBundleName</key>
-	<string>AIUsageBar</string>
+	<string>AIQuotaMeter</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

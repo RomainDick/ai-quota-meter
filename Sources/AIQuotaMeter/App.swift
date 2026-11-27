@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct AIUsageBarApp: App {
+struct AIQuotaMeterApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var store = UsageStore()
 

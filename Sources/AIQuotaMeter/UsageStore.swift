@@ -23,6 +23,18 @@ final class UsageStore: ObservableObject {
     private let history = HistoryStore()
     private let notifier = Notifier()
     private var timer: Timer?
+    private var updateTimer: Timer?
+    private static let autoUpdateKey = "updates.automatic"
+    private static let lastCheckKey = "updates.lastCheck"
+    private static let updateCheckInterval: TimeInterval = 24 * 3600
+    private static let updateTimerInterval: TimeInterval = 3600
+    private static let firstCheckDelay: UInt64 = 10_000_000_000
+
+    @Published private(set) var update: ReleaseInfo?
+    @Published private(set) var updateStatus: UpdateStatus = .idle
+    @Published var automaticUpdateCheck = UserDefaults.standard.object(forKey: autoUpdateKey) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(automaticUpdateCheck, forKey: Self.autoUpdateKey) }
+    }
     @Published private(set) var isRefreshing = false
     private var refreshStartedAt = Date()
     private static let minimumSpinnerDuration: TimeInterval = 0.6
@@ -32,6 +44,60 @@ final class UsageStore: ObservableObject {
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.refresh() }
+        }
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: Self.firstCheckDelay)
+            self.checkForUpdatesIfDue()
+        }
+        updateTimer = Timer.scheduledTimer(withTimeInterval: Self.updateTimerInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.checkForUpdatesIfDue() }
+        }
+    }
+
+    func checkForUpdatesIfDue() {
+        guard automaticUpdateCheck else { return }
+        let last = UserDefaults.standard.double(forKey: Self.lastCheckKey)
+        guard Date().timeIntervalSince1970 - last >= Self.updateCheckInterval || update != nil else { return }
+        checkForUpdates(manual: false)
+    }
+
+    func checkForUpdates(manual: Bool) {
+        guard updateStatus != .checking, updateStatus != .installing else { return }
+        updateStatus = manual ? .checking : .idle
+        Task { @MainActor in
+            do {
+                let release = try await Updater.latestRelease()
+                UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: Self.lastCheckKey)
+                if Updater.isNewer(release) {
+                    update = release
+                    updateStatus = .idle
+                    if settings.notifications { notifier.announceUpdate(version: release.version) }
+                } else {
+                    update = nil
+                    updateStatus = manual ? .upToDate : .idle
+                }
+            } catch {
+                updateStatus = manual ? .failed(error.localizedDescription) : .idle
+            }
+        }
+    }
+
+    func installUpdate() {
+        guard let update else { return }
+        guard Updater.canSelfUpdate else {
+            NSWorkspace.shared.open(update.pageURL)
+            return
+        }
+        updateStatus = .installing
+        Task { @MainActor in
+            do {
+                let target = AppLocation.bundleURL
+                try await Updater.install(update, into: target)
+                Updater.relaunch(target)
+                NSApp.terminate(nil)
+            } catch {
+                updateStatus = .failed(error.localizedDescription)
+            }
         }
     }
 
@@ -72,7 +138,7 @@ final class UsageStore: ObservableObject {
 
     func uninstallApp() {
         let confirmed = Onboarding.ask(
-            title: "Désinstaller AI Usage Bar ?",
+            title: "Désinstaller AI Quota Meter ?",
             message: "Le hook Claude Code sera retiré (ta statusLine précédente est restaurée), l'historique et les réglages seront supprimés et l'app sera mise à la corbeille.",
             confirm: "Désinstaller",
             cancel: "Annuler"
@@ -142,4 +208,12 @@ final class UsageStore: ObservableObject {
             "\(provider.shortName) \(Int((provider.fiveHour?.effectivePercent(at: now) ?? 0).rounded())) %"
         }.joined(separator: " · ")
     }
+}
+
+enum UpdateStatus: Equatable {
+    case idle
+    case checking
+    case upToDate
+    case installing
+    case failed(String)
 }

@@ -7,6 +7,8 @@ case "--install-hook":
     CLI.installHook()
 case "--uninstall-hook":
     CLI.uninstallHook()
+case "--update":
+    CLI.update()
 default:
-    AIUsageBarApp.main()
+    AIQuotaMeterApp.main()
 }

@@ -2,9 +2,9 @@
 import PackageDescription
 
 let package = Package(
-    name: "AIUsageBar",
+    name: "AIQuotaMeter",
     platforms: [.macOS(.v13)],
     targets: [
-        .executableTarget(name: "AIUsageBar", path: "Sources/AIUsageBar")
+        .executableTarget(name: "AIQuotaMeter", path: "Sources/AIQuotaMeter")
     ]
 )
