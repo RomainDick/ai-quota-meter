@@ -119,7 +119,7 @@ final class UsageStore: ObservableObject {
     }
 
     func historyPoints(now: Date) -> [HistoryPoint] {
-        history.points(for: providers, since: Calendar.current.startOfDay(for: now), now: now)
+        history.points(for: providers.filter { !settings.hiddenProviders.contains($0.id) }, since: Calendar.current.startOfDay(for: now), now: now)
     }
 
     func toggleHook() {

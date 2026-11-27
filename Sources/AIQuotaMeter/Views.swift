@@ -47,7 +47,7 @@ struct UsagePopover: View {
                 UpdateBanner(store: store, update: update)
                 Divider()
             }
-            ForEach(store.providers) { provider in
+            ForEach(store.providers.filter { !store.settings.hiddenProviders.contains($0.id) }) { provider in
                 ProviderSection(provider: provider, settings: store.settings, projection: store.projection(for: provider), now: now)
                 Divider()
             }
@@ -222,7 +222,7 @@ struct SettingsView: View {
                 set: { store.setLaunchAtLogin($0) }
             ))
             Divider()
-            Text("Afficher dans la barre de menus").font(.subheadline)
+            Text("Outils affichés").font(.subheadline)
             ForEach(store.providers) { provider in
                 Toggle(provider.name, isOn: Binding(
                     get: { !store.settings.hiddenProviders.contains(provider.id) },
