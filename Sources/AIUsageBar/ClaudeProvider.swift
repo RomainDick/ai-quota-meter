@@ -14,9 +14,6 @@ final class ClaudeProvider {
 
     private let home = FileManager.default.homeDirectoryForCurrentUser
     private var projectsRoot: URL { home.appendingPathComponent(".claude/projects") }
-    private var snapshotURL: URL {
-        home.appendingPathComponent("Library/Application Support/ai-usage-bar/claude-snapshot.json")
-    }
     private var cache: [String: ParsedFile] = [:]
 
     func load(now: Date) -> ProviderUsage {
@@ -27,7 +24,7 @@ final class ClaudeProvider {
     }
 
     private func readSnapshot(into usage: inout ProviderUsage) {
-        guard let data = try? Data(contentsOf: snapshotURL),
+        guard let data = try? Data(contentsOf: AppPaths.snapshotURL),
               let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             usage.detail = "Aucune donnée de quota : lance une session Claude Code"
             return

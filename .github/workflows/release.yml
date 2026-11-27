@@ -16,9 +16,12 @@ jobs:
         run: UNIVERSAL=1 VERSION="${GITHUB_REF_NAME#v}" ./scripts/package.sh
       - name: Archive
         run: |
+          ./scripts/make-dmg.sh
+          mv build/AIUsageBar.dmg AIUsageBar.dmg
           ditto -c -k --keepParent build/AIUsageBar.app AIUsageBar.zip
           shasum -a 256 AIUsageBar.zip > AIUsageBar.zip.sha256
+          shasum -a 256 AIUsageBar.dmg > AIUsageBar.dmg.sha256
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" AIUsageBar.zip AIUsageBar.zip.sha256 --title "$GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" AIUsageBar.dmg AIUsageBar.dmg.sha256 AIUsageBar.zip AIUsageBar.zip.sha256 --title "$GITHUB_REF_NAME" --notes-file .github/release-notes.md --generate-notes

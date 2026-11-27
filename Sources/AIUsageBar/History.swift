@@ -20,8 +20,7 @@ final class HistoryStore {
     private static let projectionMinSpan: TimeInterval = 600
     private static let duplicateInterval: Double = 300
 
-    private let url = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/ai-usage-bar/history.json")
+    private let url = AppPaths.supportDir.appendingPathComponent("history.json")
     private var samples: [String: [HistorySample]]
 
     init() {

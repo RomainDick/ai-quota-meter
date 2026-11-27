@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import ServiceManagement
 import SwiftUI
@@ -6,6 +7,7 @@ import SwiftUI
 final class UsageStore: ObservableObject {
     @Published private(set) var providers: [ProviderUsage] = []
     @Published private(set) var label: MenuLabel = .idle
+    @Published private(set) var hookStatus = HookManager.status()
     @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
     @Published var settings = AppSettings.load() {
         didSet {
@@ -21,7 +23,9 @@ final class UsageStore: ObservableObject {
     private let history = HistoryStore()
     private let notifier = Notifier()
     private var timer: Timer?
-    private var refreshing = false
+    @Published private(set) var isRefreshing = false
+    private var refreshStartedAt = Date()
+    private static let minimumSpinnerDuration: TimeInterval = 0.6
 
     init() {
         if settings.notifications { notifier.requestAuthorization() }
@@ -32,8 +36,9 @@ final class UsageStore: ObservableObject {
     }
 
     func refresh() {
-        guard !refreshing else { return }
-        refreshing = true
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        refreshStartedAt = Date()
         let claude = claude
         let codex = codex
         Task.detached(priority: .utility) {
@@ -51,6 +56,38 @@ final class UsageStore: ObservableObject {
         history.points(for: providers, since: Calendar.current.startOfDay(for: now), now: now)
     }
 
+    func toggleHook() {
+        do {
+            if hookStatus == .installed {
+                try HookManager.uninstall()
+                UserDefaults.standard.set(true, forKey: Onboarding.hookDeclinedKey)
+            } else if let executable = Bundle.main.executablePath {
+                try HookManager.install(executable: executable)
+            }
+        } catch {
+            Onboarding.inform(title: "Modification du hook impossible", message: error.localizedDescription)
+        }
+        hookStatus = HookManager.status()
+    }
+
+    func uninstallApp() {
+        let confirmed = Onboarding.ask(
+            title: "Désinstaller AI Usage Bar ?",
+            message: "Le hook Claude Code sera retiré (ta statusLine précédente est restaurée), l'historique et les réglages seront supprimés et l'app sera mise à la corbeille.",
+            confirm: "Désinstaller",
+            cancel: "Annuler"
+        )
+        guard confirmed else { return }
+        if hookStatus != .absent { try? HookManager.uninstall() }
+        try? SMAppService.mainApp.unregister()
+        try? FileManager.default.removeItem(at: AppPaths.supportDir)
+        if let domain = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: domain)
+        }
+        AppLocation.moveToTrash()
+        NSApp.terminate(nil)
+    }
+
     func setLaunchAtLogin(_ enabled: Bool) {
         do {
             if enabled {
@@ -66,7 +103,16 @@ final class UsageStore: ObservableObject {
 
     private func apply(_ loaded: [ProviderUsage], now: Date) {
         providers = loaded
-        refreshing = false
+        hookStatus = HookManager.status()
+        let remaining = Self.minimumSpinnerDuration - Date().timeIntervalSince(refreshStartedAt)
+        if remaining > 0 {
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+                self.isRefreshing = false
+            }
+        } else {
+            isRefreshing = false
+        }
         history.record(loaded, now: now)
         if settings.notifications { notifier.evaluate(loaded, settings: settings, now: now) }
         updateLabel()

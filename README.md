@@ -12,13 +12,23 @@ Requiert macOS 13 ou plus récent.
 
 ## Installation
 
+1. Télécharge **AIUsageBar.dmg** depuis la [dernière release](https://github.com/RomainDick/ai-usage-bar/releases/latest), ouvre-le et glisse **AIUsageBar** sur **Applications**.
+2. Ouvre l'app. La première fois, macOS la bloque car elle n'est pas notarisée par Apple :
+   - **macOS 15 et plus** : Réglages Système › Confidentialité et sécurité, puis **Ouvrir quand même** en bas de la page ;
+   - **macOS 13 et 14** : clic droit sur l'app › Ouvrir, puis **Ouvrir**.
+3. Au premier lancement, l'app propose de se ranger dans Applications si elle n'y est pas, puis d'installer le hook Claude Code. Relance ensuite tes sessions Claude Code.
+
+Le hook se retire ou se réinstalle dans les réglages de l'app (roue crantée), qui proposent aussi **Désinstaller AI Usage Bar** : hook retiré, `statusLine` précédente restaurée, données supprimées et app mise à la corbeille.
+
+### En une commande
+
+Sans blocage macOS, car un fichier téléchargé avec `curl` n'est pas mis en quarantaine :
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/RomainDick/ai-usage-bar/main/install.sh | sh
 ```
 
-Le script télécharge la dernière release, vérifie sa somme de contrôle, installe l'app dans `~/Applications`, ajoute le hook `statusLine` de Claude Code et lance l'app. Relance ensuite une session Claude Code.
-
-## Désinstallation
+Désinstallation équivalente :
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/RomainDick/ai-usage-bar/main/uninstall.sh | sh
@@ -46,8 +56,8 @@ cd ai-usage-bar
 ./scripts/release.sh 0.3.0
 ```
 
-Le script met à jour la version, crée le tag et le pousse. GitHub Actions construit alors un binaire universel (Apple Silicon et Intel) et publie `AIUsageBar.zip` avec sa somme de contrôle dans les releases.
+Le script met à jour la version, crée le tag et le pousse. GitHub Actions construit alors un binaire universel (Apple Silicon et Intel) et publie `AIUsageBar.dmg` et `AIUsageBar.zip`, avec leurs sommes de contrôle, dans les releases.
 
 ## Limites
 
-L'app est signée ad hoc et n'est pas notarisée par Apple. L'installation par le script fonctionne car un fichier téléchargé avec `curl` n'est pas mis en quarantaine ; un zip téléchargé depuis le navigateur sera bloqué par Gatekeeper au premier lancement.
+L'app est signée ad hoc et n'est pas notarisée par Apple : macOS demande une autorisation manuelle à la première ouverture d'une app téléchargée depuis le navigateur (voir Installation).

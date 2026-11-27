@@ -36,7 +36,17 @@ struct UsagePopover: View {
             HStack {
                 Button { showingSettings = true } label: { Image(systemName: "gearshape") }
                     .help("Réglages")
-                Button("Actualiser") { store.refresh() }
+                Button { store.refresh() } label: {
+                    HStack(spacing: 6) {
+                        if store.isRefreshing {
+                            ProgressView().controlSize(.small).scaleEffect(0.7).frame(width: 12, height: 12)
+                        } else {
+                            Image(systemName: "arrow.clockwise").frame(width: 12, height: 12)
+                        }
+                        Text(store.isRefreshing ? "Actualisation…" : "Actualiser")
+                    }
+                }
+                .disabled(store.isRefreshing)
                 Spacer()
                 Button("Quitter") { NSApplication.shared.terminate(nil) }
             }
@@ -200,11 +210,30 @@ struct SettingsView: View {
             }
             Text("Un outil sans fenêtre 5 h en cours est masqué automatiquement.")
                 .font(.caption).foregroundStyle(.secondary)
+            Divider()
+            Text("Claude Code").font(.subheadline)
+            HStack {
+                Text(hookDescription).font(.caption).foregroundStyle(.secondary)
+                Spacer()
+                Button(store.hookStatus == .installed ? "Retirer" : "Installer") { store.toggleHook() }
+                    .disabled(store.hookStatus == .unavailable)
+            }
+            Divider()
+            Button("Désinstaller AI Usage Bar…", role: .destructive) { store.uninstallApp() }
             HStack {
                 Spacer()
                 Button("Terminé", action: done).keyboardShortcut(.defaultAction)
             }
         }
         .toggleStyle(.checkbox)
+    }
+
+    private var hookDescription: String {
+        switch store.hookStatus {
+        case .installed: return "Hook statusLine actif"
+        case .outdated: return "Hook pointant vers un ancien emplacement"
+        case .absent: return "Hook absent : quota Claude non lu"
+        case .unavailable: return "Range l'app dans Applications pour installer le hook"
+        }
     }
 }

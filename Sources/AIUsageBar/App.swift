@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AIUsageBarApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @StateObject private var store = UsageStore()
 
     var body: some Scene {
